@@ -1,0 +1,22 @@
+[project]
+name = "kiwi-ask"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Henry Xu", email = "hxu.akl.nz@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "azure-identity>=1.27.0",
+    "openai>=3.46.0",
+    "pydantic>=2.14.3",
+    "python-dotenv>=1.2.4",
+]
+
+[project.scripts]
+kiwi-ask = "kiwi_ask.main:main"
+
+[build-system]
+requires = ["uv_build>=0.12.18,<0.13.0"]
+build-backend = "uv_build"
