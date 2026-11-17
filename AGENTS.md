@@ -18,14 +18,6 @@ Current stage: M0 (foundation).
   `EMBED_DEPLOYMENT`), never a hard-coded model name.
 - Shared client code lives in `src/kiwi_ask/common/`.
 
-## Technical responsibilities
-- RAG：Handles document retrieval, context assembly, and source-backed answers.
-- Function Calling: Requests tool calls using structured arguments; application code controls execution.
-- Agent: Handles tasks that require the model to dynamically select tools and decide what to do next.
-- LangChain: Provides integrations for models, retrievers, and tools as needed.
-- LangGraph: Orchestrates workflows that require explicit state, branching, loops, or human approval.
-- MCP: Exposes or connects tools and resources; it should not replace all internal function calls within the application.
-
 ## Dependencies, Cost, and Observability
 
 - Prefer the project's existing dependencies and versions.
