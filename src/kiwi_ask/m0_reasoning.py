@@ -2,15 +2,17 @@ import os
 import time
 
 from dotenv import load_dotenv
+from openai.types.shared import ReasoningEffort
+
 from kiwi_ask.common.llm import get_chat_client
 
-
-EFFORTS = ["minimal", "low", "medium", "high"]
+EFFORTS: list[ReasoningEffort] = ["minimal", "low", "medium", "high"]
 
 QUESTIONS = [
     "用一句话解释什么是 embedding。",
     "我在奥克兰租房，房东 8 个月前涨过租金，现在又通知要涨，合法吗？",
 ]
+
 
 def main():
     load_dotenv()
@@ -41,11 +43,7 @@ def main():
 
             if usage is not None:
                 details = usage.completion_tokens_details
-                reasoning = (
-                    details.reasoning_tokens
-                    if details is not None
-                    else None
-                )
+                reasoning = details.reasoning_tokens if details is not None else None
                 visible = (
                     usage.completion_tokens - reasoning
                     if reasoning is not None

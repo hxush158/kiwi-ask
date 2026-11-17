@@ -1,9 +1,11 @@
 import os
 
 from dotenv import load_dotenv
+
 from kiwi_ask.common.llm import get_chat_client
 
 load_dotenv()
+
 
 def main():
     client = get_chat_client()
@@ -14,6 +16,7 @@ def main():
         ],
     )
     print(response.choices[0].message.content)
-    
-if __name__ == "__main__": 
+
+
+if __name__ == "__main__":
     main()
