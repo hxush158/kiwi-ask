@@ -75,7 +75,11 @@ embedding 的四个回答都表达了向量表示和相似性的核心概念，�
 - **纠正 AI 的一次误判**：我在会话里运行 `git diff`，结果为空。智能体据此判断"AGENTS.md 的修改没有保存到磁盘"。
   实际上 AGENTS.md 已经提交（c3d9f63），`git diff` 只显示已跟踪文件上未提交的改动，所以为空是正常的。
   教训：智能体会根据不完整的信息"补出"一个原因；对它的结论，要用 `git status` / `git log` 等事实核实。
-- **迭代**：（待补：几轮，每轮改了什么）
-- **make verify 拦下了什么**：（待补）
-- **我修改或拒绝了什么，为什么**：（待补）
-- **改进**：（待补：下次任务描述怎么写更好）
+- **迭代**：
+  智能体运行 make verify 约四轮，依次卡在格式、lint、pyright，逐项修复后全部通过；单元测试一次通过。
+- **make verify 拦下了什么**： 
+  格式（空行、行尾空格）、lint（import 顺序）、pyright（reasoning_effort 传入普通 str，改用 SDK 自带的 ReasoningEffort 类型）。
+- **我修改或拒绝了什么，为什么**：
+  派任务前精简 AGENTS.md，删掉 RAG / LangChain 等概念说明，只保留项目约定；审核 ci.yml 后提出三条改进（push 只在 main 上触发、uv sync --locked、最小权限），放到下一个 PR。
+- **改进**：
+  派任务前先明确目标和验收标准；改写历史前先查 git log origin/<分支>
