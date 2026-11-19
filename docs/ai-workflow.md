@@ -83,3 +83,15 @@ embedding 的四个回答都表达了向量表示和相似性的核心概念，�
   派任务前精简 AGENTS.md，删掉 RAG / LangChain 等概念说明，只保留项目约定；审核 ci.yml 后提出三条改进（push 只在 main 上触发、uv sync --locked、最小权限），放到下一个 PR。
 - **改进**：
   派任务前先明确目标和验收标准；改写历史前先查 git log origin/<分支>
+- **踩坑**：PR 合并后又对分支 --amend 并强制推送，改写后的提交没有进入 main。
+  教训：PR 一旦合并就不再改写历史，发现问题就用新提交往前修；不对 main 做强制推送。
+
+  ## 2026-11-20 M0：结构化输出（咨询分流）
+  
+- 5 个用例，4/5 与预期一致。
+- 多机构问题（房屋损坏 + 受伤）被分为 Other：单值字段无法表达多机构，模型退而选 Other；
+  摘要正确保留了两个诉求。不为通过测试而改 prompt，留给 M4 改为 agencies 列表。
+- 摘要里使用了过时名称 "EQC"（2024 年已改名为 Natural Hazards Commission）：
+  分类字段的自动比对发现不了这类错误 → M1 需要官方资料，M2 评估要检查回答内容。
+- 字段 description 会进入 JSON Schema，相当于给每个字段写 prompt。
+- 初版自己写，review 后的改进由 Claude 直接修改。
