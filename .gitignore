@@ -5,3 +5,4 @@ __pycache__/
 .DS_Store
 # Raw source documents (licensing: keep out of the public repo)
 data/raw/
+data/parsed/
