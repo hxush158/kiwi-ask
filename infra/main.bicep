@@ -30,6 +30,36 @@ param logAnalyticsName string = 'log-kiwiask-dev'
 @description('Application Insights name.')
 param appInsightsName string = 'appi-kiwiask-dev'
 
+@description('Azure AI Search service name. Globally unique (becomes <name>.search.windows.net).')
+@minLength(2)
+@maxLength(60)
+param searchName string
+
+@description('Search tier. Free: 50 MB, 3 indexes, one per subscription, may be removed after long inactivity.')
+@allowed([
+  'free'
+  'basic'
+])
+param searchSku string = 'free'
+
+@description('Semantic ranker plan. Set to disabled if the region or tier does not offer it.')
+@allowed([
+  'disabled'
+  'free'
+  'standard'
+])
+param semanticSearch string = 'free'
+
+@description('Document Intelligence resource name. Also the custom subdomain (required for Entra ID auth).')
+param docIntelName string = 'di-kiwiask-dev'
+
+@description('Document Intelligence tier. F0 is free (500 pages/month, one F0 per subscription).')
+@allowed([
+  'F0'
+  'S0'
+])
+param docIntelSku string = 'F0'
+
 @description('Object ID of the user or identity that calls the models and manages secrets.')
 @minLength(36)
 @maxLength(36)
@@ -62,6 +92,9 @@ param embedDeployment object = {
 // Built-in role definition IDs.
 var cognitiveServicesOpenAIUserRoleId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 var keyVaultSecretsOfficerRoleId = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
+var searchIndexDataContributorRoleId = '8ebe5a00-799e-43f5-93ac-243d3dce84a7'
+var searchServiceContributorRoleId = '7ca78c08-252a-4471-8644-bb5ff32d4ba0'
+var cognitiveServicesUserRoleId = 'a97b65f3-24c7-4388-baec-2e87135dc908'
 
 // ---------- Foundry resource, project and model deployments ----------
 
@@ -182,13 +215,51 @@ resource keyVault 'Microsoft.KeyVault/vaults@2026-05-15' = {
   }
 }
 
+// ---------- M1: Azure AI Search and Document Intelligence ----------
+
+resource search 'Microsoft.Search/searchServices@2025-05-01' = {
+  name: searchName
+  location: location
+  tags: tags
+  sku: {
+    name: searchSku
+  }
+  properties: {
+    replicaCount: 1
+    partitionCount: 1
+    hostingMode: 'Default'
+    publicNetworkAccess: 'Enabled'
+    // Entra ID (RBAC) only. authOptions must be omitted when local auth is disabled.
+    disableLocalAuth: true
+    semanticSearch: semanticSearch
+  }
+}
+
+resource docIntel 'Microsoft.CognitiveServices/accounts@2026-09-01' = {
+  name: docIntelName
+  location: location
+  tags: tags
+  kind: 'FormRecognizer'
+  sku: {
+    name: docIntelSku
+  }
+  properties: {
+    customSubDomainName: docIntelName
+    disableLocalAuth: true
+    publicNetworkAccess: 'Enabled'
+  }
+}
+
 // ---------- Role assignments (scoped to single resources) ----------
 
 resource openAIUserAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(foundry.id, principalId, cognitiveServicesOpenAIUserRoleId)
   scope: foundry
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', cognitiveServicesOpenAIUserRoleId)
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      cognitiveServicesOpenAIUserRoleId
+    )
     principalId: principalId
     principalType: principalType
   }
@@ -199,6 +270,41 @@ resource secretsOfficerAssignment 'Microsoft.Authorization/roleAssignments@2022-
   scope: keyVault
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultSecretsOfficerRoleId)
+    principalId: principalId
+    principalType: principalType
+  }
+}
+
+// Developer: create indexes and upload documents (M1 ingestion).
+resource searchServiceContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(search.id, principalId, searchServiceContributorRoleId)
+  scope: search
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', searchServiceContributorRoleId)
+    principalId: principalId
+    principalType: principalType
+  }
+}
+
+resource searchIndexDataContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(search.id, principalId, searchIndexDataContributorRoleId)
+  scope: search
+  properties: {
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      searchIndexDataContributorRoleId
+    )
+    principalId: principalId
+    principalType: principalType
+  }
+}
+
+// Developer: call Document Intelligence (prebuilt-layout) with Entra ID.
+resource docIntelUserAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(docIntel.id, principalId, cognitiveServicesUserRoleId)
+  scope: docIntel
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', cognitiveServicesUserRoleId)
     principalId: principalId
     principalType: principalType
   }
@@ -220,3 +326,9 @@ output projectName string = project.name
 
 @description('Application Insights resource name, for later modules.')
 output appInsightsName string = appInsights.name
+
+@description('Azure AI Search endpoint (SEARCH_ENDPOINT in .env).')
+output searchEndpoint string = 'https://${search.name}.search.windows.net'
+
+@description('Document Intelligence endpoint (DOCINTEL_ENDPOINT in .env).')
+output docIntelEndpoint string = docIntel.properties.endpoint
