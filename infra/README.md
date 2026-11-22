@@ -9,7 +9,9 @@
 | Model deployments (GlobalStandard, created one after another) | `chat-mini` (gpt-5-mini, 20K TPM), `embed-small` (text-embedding-3-small, 50K TPM) |
 | Log Analytics workspace + Application Insights | `log-kiwiask-dev`, `appi-kiwiask-dev` |
 | Key Vault (RBAC, soft delete 7 days, no purge protection) | set in `main.bicepparam` |
-| Role assignments for `PRINCIPAL_ID`, scoped to single resources | Cognitive Services OpenAI User (Foundry), Key Vault Secrets Officer (Key Vault) |
+| Azure AI Search (Free tier, RBAC only, semantic ranker free plan) — M1 | set in `main.bicepparam` |
+| Document Intelligence (F0, Entra ID only) — M1 | `di-kiwiask-dev` |
+| Role assignments for `PRINCIPAL_ID`, scoped to single resources | Cognitive Services OpenAI User (Foundry), Key Vault Secrets Officer (Key Vault), Search Service Contributor + Search Index Data Contributor (Search), Cognitive Services User (Document Intelligence) |
 
 All resources are tagged `project=kiwi-ask`.
 
@@ -24,7 +26,7 @@ All resources are tagged `project=kiwi-ask`.
 
    If a version differs, update `chatDeployment` / `embedDeployment` in `main.bicep`.
 
-2. Make sure `keyVaultName` in `main.bicepparam` is not taken (Key Vault names are
+2. Make sure `keyVaultName` and `searchName` in `main.bicepparam` are not taken (Key Vault names are
    global, and deleted vaults keep their name during soft delete).
 
 3. Set your object ID (read by `main.bicepparam`, never committed):
@@ -51,7 +53,12 @@ az deployment group create -g rg-kiwiask-dev \
   --query properties.outputs
 ```
 
-Put the `openAIEndpoint` output into `.env` as `AZURE_OPENAI_ENDPOINT`.
+Put the outputs into `.env`: `openAIEndpoint` → `AZURE_OPENAI_ENDPOINT`,
+`searchEndpoint` → `SEARCH_ENDPOINT`, `docIntelEndpoint` → `DOCINTEL_ENDPOINT`.
+
+Free-tier notes: one free Search service and one F0 Document Intelligence resource
+per subscription; a free Search service may be removed after long inactivity
+(re-run the deployment and the ingestion to restore it).
 Role assignments can take a few minutes before calls succeed.
 
 ## Tear down

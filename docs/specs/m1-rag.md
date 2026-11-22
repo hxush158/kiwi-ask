@@ -201,8 +201,8 @@ and about 4 that need two documents.
 
 ## Open questions
 
-1. Does the AI Search Free tier support Entra ID (RBAC) data-plane access? Verify in T1;
-   if not, decide between Basic tier (cost) and keeping keys temporarily (rejected unless
-   no other option).
+1. ~~Does the AI Search Free tier support Entra ID (RBAC) data-plane access?~~ Resolved in T1:
+   Microsoft docs state role-based access works on any tier, including Free, so keys stay
+   disabled (`disableLocalAuth: true`).
 2. Starting value of `MIN_RERANKER_SCORE`: tune with T5 questions.
 3. Reasoning effort for answer generation: compare `low` and `medium` on T5 questions.
