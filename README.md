@@ -101,6 +101,9 @@ Development follows a "spec → task → agent → verify → review" loop:
 - **[docs/ai-workflow.md](docs/ai-workflow.md)** (in Chinese) records each task:
   how it was specified, what the checks caught, and where agent or model output
   was wrong and how that was found.
+- **[docs/copilot-studio.md](docs/copilot-studio.md)** records a low-code companion
+  built in Microsoft Copilot Studio: tenant and licensing setup, grounding in official
+  sources, and four tested scenarios with full transcripts.
 
 ## Disclaimer
 
