@@ -8,10 +8,14 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
+    "azure-ai-documentintelligence>=1.0.2",
     "azure-identity>=1.27.0",
+    "azure-search-documents>=12.1.0",
+    "fastapi>=0.165.0",
     "openai>=3.46.0",
     "pydantic>=2.14.3",
     "python-dotenv>=1.2.4",
+    "uvicorn[standard]>=0.54.0",
 ]
 
 [project.scripts]
@@ -23,6 +27,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "playwright>=1.65.2",
     "pyright>=1.1.414",
     "pytest>=9.2.0",

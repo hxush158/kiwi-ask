@@ -169,12 +169,16 @@ def search(query: str, agency: Agency | None = None, top: int = 5) -> list[Retri
 
 | # | Task | Owner | Depends on | Can run in parallel with |
 | --- | --- | --- | --- | --- |
+| T0 | Shared foundation: all M1 dependencies, `kiwi_ask/models.py` (Agency, RetrievedChunk), `common/config.py` (settings), `common/azure.py` (keyless Search clients) | Claude + Hui | — | — |
 | T1 | Bicep: Search, Document Intelligence, roles (Container Apps parts come in T6) | agent, Hui deploys | — | T5 |
-| T2 | `ingest/`: parse, clean, chunk, embed, upload, report | agent | T1 deployed | T3, T4, T5 |
-| T3 | `kiwi_ask/retrieval.py`: index creation, query rewrite, hybrid + semantic search | agent | T1 deployed | T2, T4, T5 |
-| T4 | `kiwi_ask/answer.py` + `app/` FastAPI: generation, citation validation, notices | agent | T3 interface (use fakes until T3 lands) | T2, T3, T5 |
+| T2 | `ingest/`: **owns the index** (create/update schema) + parse, clean, chunk, embed, upload, report | agent | T0, T1 | T3, T4, T5 |
+| T3 | `kiwi_ask/retrieval.py`: **read only**: query rewrite, hybrid + semantic search returning `RetrievedChunk` | agent | T0, T1 (real index after T2) | T2, T4, T5 |
+| T4 | `kiwi_ask/answer.py` + `app/` FastAPI: generation, citation validation, notices | agent | T0 (fake `search` until T3 lands) | T2, T3, T5 |
 | T5 | `eval/m1_questions.csv`: 30 questions | **Hui** | — | all |
 | T6 | Dockerfile, GHCR workflow, Container App + Entra auth in Bicep, deploy | agent, Hui deploys | T2–T4 merged | — |
+
+T0 exists so the parallel branches do not each add dependencies (conflicting `uv.lock`)
+or define their own copies of shared types. Branch T2–T4 from `main` after T0 merges.
 
 Rules for every task: follow AGENTS.md; unit tests must not call Azure (use fakes for
 search and model clients); `make verify` passes; one PR per task.
@@ -206,3 +210,5 @@ and about 4 that need two documents.
    disabled (`disableLocalAuth: true`).
 2. Starting value of `MIN_RERANKER_SCORE`: tune with T5 questions.
 3. Reasoning effort for answer generation: compare `low` and `medium` on T5 questions.
+4. Model deployments auto-upgrade to new default versions; pin `versionUpgradeOption` to
+   `OnceCurrentVersionExpired` before M2 so evaluation results stay comparable.
